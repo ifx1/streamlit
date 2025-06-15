@@ -37,19 +37,19 @@ sleep 1
 
 ###########################################
 
-export NZ_SERVER=""
-export NZ_CLIENT_SECRET=""
-export NZ_TLS="true"
-export NZ_INSECURE_TLS="false"
-export NZ_DISABLE_AUTO_UPDATE="true"
-export NZ_UUID=""
+export NZ_SERVER=${NZ_SERVER:-""}
+export NZ_CLIENT_SECRET=${NZ_CLIENT_SECRET:-""}
+export NZ_TLS=${NZ_TLS:-"true"}
+export NZ_INSECURE_TLS=${NZ_INSECURE_TLS:-"false"}
+export NZ_DISABLE_AUTO_UPDATE=${NZ_DISABLE_AUTO_UPDATE:-"true"}
+export NZ_UUID=${NZ_UUID:-""}
 
-CF_TOKEN=""
+CF_TOKEN=${CF_TOKEN:-""}
 
-VLESS_PORT="3001"
-VLESS_DOMAIN=""
-VMESS_PORT="3002"
-VMESS_DOMAIN=""
+VLESS_PORT=${VLESS_PORT:-"3001"}
+VLESS_DOMAIN=${VLESS_DOMAIN:-""}
+VMESS_PORT=${VMESS_PORT:-"3002"}
+VMESS_DOMAIN=${VMESS_DOMAIN:-""}
 
 ###########################################
 

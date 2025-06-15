@@ -1,3 +1,7 @@
+#!/bin/bash
+#
+# Author: nano
+
 uname -a
 
 # if [ ! -f "nezha-agent" ]; then
@@ -61,12 +65,18 @@ export NZ_UUID=${NZ_UUID:-""}
 
 CF_TOKEN=${CF_TOKEN:-""}
 
-VLESS_PORT=${VLESS_PORT:-"3001"}
-VLESS_DOMAIN=${VLESS_DOMAIN:-""}
-VMESS_PORT=${VMESS_PORT:-"3002"}
-VMESS_DOMAIN=${VMESS_DOMAIN:-""}
+# 节点信息，除端口和对应的域名外只有需要固定密码才设置，否则随机，随机母鸡重启将重置密码
 XRAY_ID=${XRAY_ID:-""}
-XRAY_PATH=${XRAY_PATH:-""}
+VLESS_XHTTP_PORT=${VLESS_XHTTP_PORT:-"3001"}
+VLESS_XHTTP_DOMAIN=${VLESS_XHTTP_DOMAIN:-""}
+VMESS_XHTTP_PORT=${VMESS_XHTTP_PORT:-"3002"}
+VMESS_XHTTP_DOMAIN=${VMESS_XHTTP_DOMAIN:-""}
+XHTTP_PATH=${XHTTP_PATH:-""}
+WS_PORT=${WS_PORT:-"3003"}
+WS_DOMAIN=${WS_DOMAIN:-""}
+VLESS_WS_PATH=${VLESS_WS_PATH:-""}
+VMESS_WS_PATH=${VMESS_WS_PATH:-""}
+TROJAN_WS_PATH=${TROJAN_WS_PATH:-""}
 
 ###########################################
 
@@ -82,22 +92,38 @@ if [ $is_cf_running = "false" ]; then
 fi
 
 gen_xray_config() {
-    id=${XRAY_ID:-"$(./xray uuid)"}
-    if [ $XRAY_PATH = "" ]; then
-        XRAY_PATH=$(./xray uuid)
-        XRAY_PATH=${XRAY_PATH:0:8}
+    XRAY_ID=${XRAY_ID:-"$(./xray uuid)"}
+
+    if [ "$XHTTP_PATH" = "" ]; then
+        XHTTP_PATH=$(./xray uuid)
+        XHTTP_PATH=${XHTTP_PATH:0:8}
     fi
-    path=$XRAY_PATH
+
+    if [ "$VLESS_WS_PATH" = "" ]; then
+        VLESS_WS_PATH=$(./xray uuid)
+        VLESS_WS_PATH=${VLESS_WS_PATH:0:8}
+    fi
+
+    if [ "$VMESS_WS_PATH" = "" ]; then
+        VMESS_WS_PATH=$(./xray uuid)
+        VMESS_WS_PATH=${VMESS_WS_PATH:0:8}
+    fi
+
+    if [ "$TROJAN_WS_PATH" = "" ]; then
+        TROJAN_WS_PATH=$(./xray uuid)
+        TROJAN_WS_PATH=${TROJAN_WS_PATH:0:8}
+    fi
+
     echo "{
     \"inbounds\": [
         {
             \"listen\": \"::\",
-            \"port\": $VLESS_PORT,
+            \"port\": $VLESS_XHTTP_PORT,
             \"protocol\": \"vless\",
             \"settings\": {
                 \"clients\": [
                     {
-                        \"id\": \"$id\"
+                        \"id\": \"$XRAY_ID\"
                     }
                 ],
                 \"decryption\": \"none\"
@@ -106,18 +132,18 @@ gen_xray_config() {
                 \"network\": \"xhttp\",
                 \"security\": \"none\",
                 \"xhttpSettings\": {
-                    \"path\": \"$path\"
+                    \"path\": \"$XHTTP_PATH\"
                 }
             }
         },
         {
             \"listen\": \"::\",
-            \"port\": $VMESS_PORT,
+            \"port\": $VMESS_XHTTP_PORT,
             \"protocol\": \"vmess\",
             \"settings\": {
                 \"clients\": [
                     {
-                        \"id\": \"$id\"
+                        \"id\": \"$XRAY_ID\"
                     }
                 ]
             },
@@ -125,7 +151,102 @@ gen_xray_config() {
                 \"network\": \"xhttp\",
                 \"security\": \"none\",
                 \"xhttpSettings\": {
-                    \"path\": \"$path\"
+                    \"path\": \"$XHTTP_PATH\"
+                }
+            }
+        },
+        {
+            \"listen\": \"::\",
+            \"port\": $WS_PORT,
+            \"protocol\": \"vless\",
+            \"settings\": {
+                \"clients\": [
+                    {
+                        \"id\": \"$XRAY_ID\"
+                    }
+                ],
+                \"decryption\": \"none\",
+                \"fallbacks\": [
+                    {
+                        \"dest\": $(($WS_PORT+1)),
+                        \"path\": \"/$VLESS_WS_PATH\",
+                        \"xver\": 1
+                    },
+                    {
+                        \"dest\": $(($WS_PORT+2)),
+                        \"path\": \"/$VMESS_WS_PATH\",
+                        \"xver\": 1
+                    },
+                    {
+                        \"dest\": $(($WS_PORT+3)),
+                        \"path\": \"/$TROJAN_WS_PATH\",
+                        \"xver\": 1
+                    }
+                ]
+            },
+            \"streamSettings\": {
+                \"network\": \"raw\",
+                \"security\": \"none\"
+            }
+        },
+        {
+            \"listen\": \"::\",
+            \"port\": $(($WS_PORT+1)),
+            \"protocol\": \"vless\",
+            \"settings\": {
+                \"clients\": [
+                    {
+                        \"id\": \"$XRAY_ID\"
+                    }
+                ],
+                \"decryption\": \"none\"
+            },
+            \"streamSettings\": {
+                \"network\": \"ws\",
+                \"security\": \"none\",
+                \"wsSettings\": {
+                    \"path\": \"$VLESS_WS_PATH\",
+                    \"acceptProxyProtocol\": true
+                }
+            }
+        },
+        {
+            \"listen\": \"::\",
+            \"port\": $(($WS_PORT+2)),
+            \"protocol\": \"vmess\",
+            \"settings\": {
+                \"clients\": [
+                    {
+                        \"id\": \"$XRAY_ID\"
+                    }
+                ]
+            },
+            \"streamSettings\": {
+                \"network\": \"ws\",
+                \"security\": \"none\",
+                \"wsSettings\": {
+                    \"path\": \"$VMESS_WS_PATH\",
+                    \"acceptProxyProtocol\": true
+                }
+            }
+        },
+        {
+            \"listen\": \"::\",
+            \"port\": $(($WS_PORT+3)),
+            \"protocol\": \"trojan\",
+            \"settings\": {
+                \"clients\": [
+                    {
+                        \"password\": \"$XRAY_ID\"
+                    }
+                ]
+            },
+            \"streamSettings\": {
+                \"network\": \"ws\",
+                \"security\": \"none\",
+                \"wsSettings\": {
+                    \"path\": \"$TROJAN_WS_PATH\",
+                    \"acceptProxyProtocol\": true
                 }
             }
         }
@@ -137,27 +258,48 @@ gen_xray_config() {
     ]
 }" > config.json
 
-    config="{
+    vmess_xhttp_config="{
   \"v\": \"2\",
   \"ps\": \"vmess xhttp\",
   \"add\": \"ip.sb\",
   \"port\": \"80\",
-  \"id\": \"$id\",
+  \"id\": \"$XRAY_ID\",
   \"aid\": \"0\",
   \"scy\": \"auto\",
   \"net\": \"xhttp\",
   \"type\": \"packet-up\",
-  \"host\": \"$VMESS_DOMAIN\",
-  \"path\": \"$path\",
+  \"host\": \"$VMESS_XHTTP_DOMAIN\",
+  \"path\": \"$XHTTP_PATH\",
   \"tls\": \"\",
   \"sni\": \"\",
   \"alpn\": \"\",
   \"fp\": \"\"
 }"
-    vmess_link="vmess://$(echo -n "$config" | base64 -w 0)"
-    vless_link="vless://${id}@ip.sb:443?encryption=none&security=tls&type=xhttp&host=${VLESS_DOMAIN}&path=${path}&mode=packet-up#vless xhttp"
+    vless_xhttp_link="vless://${XRAY_ID}@ip.sb:443?encryption=none&security=tls&type=xhttp&host=${VLESS_XHTTP_DOMAIN}&path=${XHTTP_PATH}&mode=packet-up#vless xhttp"
+    vmess_xhttp_link="vmess://$(echo -n "$vmess_xhttp_config" | base64 -w 0)"
+    
+    vmess_ws_config="{
+  \"v\": \"2\",
+  \"ps\": \"vmess ws\",
+  \"add\": \"ip.sb\",
+  \"port\": \"80\",
+  \"id\": \"$XRAY_ID\",
+  \"aid\": \"0\",
+  \"scy\": \"auto\",
+  \"net\": \"ws\",
+  \"type\": \"none\",
+  \"host\": \"$WS_DOMAIN\",
+  \"path\": \"$VMESS_WS_PATH\",
+  \"tls\": \"\",
+  \"sni\": \"\",
+  \"alpn\": \"\",
+  \"fp\": \"\"
+}"
+    vless_ws_link="vless://${XRAY_ID}@ip.sb:443?encryption=none&security=tls&type=ws&host=${WS_DOMAIN}&path=${VLESS_WS_PATH}#vless ws"
+    vmess_ws_link="vmess://$(echo -n "$vmess_ws_config" | base64 -w 0)"
+    trojan_ws_link="trojan://${XRAY_ID}@ip.sb:443?security=tls&type=ws&host=${WS_DOMAIN}&path=${TROJAN_WS_PATH}#trojan ws"
 
-    echo -e "${vmess_link}\n${vless_link}" | base64 -w 0 > links.txt
+    echo -e "${vless_xhttp_link}\n${vmess_xhttp_link}\n${vless_ws_link}\n${vmess_ws_link}\n${trojan_ws_link}" | base64 -w 0 > links.txt
 }
 
 if [ $is_xray_running = "false" ]; then

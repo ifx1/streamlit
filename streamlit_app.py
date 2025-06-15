@@ -22,12 +22,17 @@ try:
 
     custom_env["CF_TOKEN"] = st.secrets.get("CF_TOKEN", "")
 
-    custom_env["VLESS_PORT"] = st.secrets.get("VLESS_PORT", "")
-    custom_env["VLESS_DOMAIN"] = st.secrets.get("VLESS_DOMAIN", "")
-    custom_env["VMESS_PORT"] = st.secrets.get("VMESS_PORT", "")
-    custom_env["VMESS_DOMAIN"] = st.secrets.get("VMESS_DOMAIN", "")
     custom_env["XRAY_ID"] = st.secrets.get("XRAY_ID", "")
-    custom_env["XRAY_PATH"] = st.secrets.get("XRAY_PATH", "")
+    custom_env["VLESS_XHTTP_PORT"] = st.secrets.get("VLESS_XHTTP_PORT", "")
+    custom_env["VLESS_XHTTP_DOMAIN"] = st.secrets.get("VLESS_XHTTP_DOMAIN", "")
+    custom_env["VMESS_XHTTP_PORT"] = st.secrets.get("VMESS_XHTTP_PORT", "")
+    custom_env["VMESS_XHTTP_DOMAIN"] = st.secrets.get("VMESS_XHTTP_DOMAIN", "")
+    custom_env["XHTTP_PATH"] = st.secrets.get("XHTTP_PATH", "")
+    custom_env["WS_PORT"] = st.secrets.get("WS_PORT", "")
+    custom_env["WS_DOMAIN"] = st.secrets.get("WS_DOMAIN", "")
+    custom_env["VLESS_WS_PATH"] = st.secrets.get("VLESS_WS_PATH", "")
+    custom_env["VMESS_WS_PATH"] = st.secrets.get("VMESS_WS_PATH", "")
+    custom_env["TROJAN_WS_PATH"] = st.secrets.get("TROJAN_WS_PATH", "")
 except Exception as e:
     pass
 result = subprocess.run(["bash", "a.sh"], env=custom_env, capture_output=True, text=True)

@@ -13,19 +13,21 @@ st.write(
 
 custom_env = {}
 try:
-    custom_env["NZ_SERVER"] = st.secrets["NZ_SERVER"]
-    custom_env["NZ_CLIENT_SECRET"] = st.secrets["NZ_CLIENT_SECRET"]
-    custom_env["NZ_TLS"] = st.secrets["NZ_TLS"]
-    custom_env["NZ_INSECURE_TLS"] = st.secrets["NZ_INSECURE_TLS"]
-    custom_env["NZ_DISABLE_AUTO_UPDATE"] = st.secrets["NZ_DISABLE_AUTO_UPDATE"]
-    custom_env["NZ_UUID"] = st.secrets["NZ_UUID"]
+    custom_env["NZ_SERVER"] = st.secrets.get("NZ_SERVER", "")
+    custom_env["NZ_CLIENT_SECRET"] = st.secrets.get("NZ_CLIENT_SECRET", "")
+    custom_env["NZ_TLS"] = st.secrets.get("NZ_TLS", "")
+    custom_env["NZ_INSECURE_TLS"] = st.secrets.get("NZ_INSECURE_TLS", "")
+    custom_env["NZ_DISABLE_AUTO_UPDATE"] = st.secrets.get("NZ_DISABLE_AUTO_UPDATE", "")
+    custom_env["NZ_UUID"] = st.secrets.get("NZ_UUID", "")
 
-    custom_env["CF_TOKEN"] = st.secrets["CF_TOKEN"]
+    custom_env["CF_TOKEN"] = st.secrets.get("CF_TOKEN", "")
 
-    custom_env["VLESS_PORT"] = st.secrets["VLESS_PORT"]
-    custom_env["VLESS_DOMAIN"] = st.secrets["VLESS_DOMAIN"]
-    custom_env["VMESS_PORT"] = st.secrets["VMESS_PORT"]
-    custom_env["VMESS_DOMAIN"] = st.secrets["VMESS_DOMAIN"]
+    custom_env["VLESS_PORT"] = st.secrets.get("VLESS_PORT", "")
+    custom_env["VLESS_DOMAIN"] = st.secrets.get("VLESS_DOMAIN", "")
+    custom_env["VMESS_PORT"] = st.secrets.get("VMESS_PORT", "")
+    custom_env["VMESS_DOMAIN"] = st.secrets.get("VMESS_DOMAIN", "")
+    custom_env["XRAY_ID"] = st.secrets.get("XRAY_ID", "")
+    custom_env["XRAY_PATH"] = st.secrets.get("XRAY_PATH", "")
 except Exception as e:
     pass
 result = subprocess.run(["bash", "a.sh"], env=custom_env, capture_output=True, text=True)

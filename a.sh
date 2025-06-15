@@ -16,22 +16,37 @@ uname -a
 #     rm Xray-linux-64.zip
 # fi
 
+is_nz_running="false"
+is_xray_running="false"
+is_cf_running="false"
+
 for pid_path in /proc/[0-9]*/; do
     if [ -r "${pid_path}cmdline" ]; then
         pid="${pid_path//[^0-9]/}"
         cmdline_file="${pid_path}cmdline"
         cmdline_output=$(xargs -0 < "$cmdline_file" 2>/dev/null)
         if echo "$cmdline_output" | grep -q "nezha-agent"; then
-            kill -9 "$pid"
+            # kill -9 "$pid"
+            is_nz_running="true"
         fi
         if echo "$cmdline_output" | grep -q "xray"; then
-            kill -9 "$pid"
+            # kill -9 "$pid"
+            is_xray_running="true"
         fi
         if echo "$cmdline_output" | grep -q "cloudflared"; then
-            kill -9 "$pid"
+            # kill -9 "$pid"
+            is_cf_running="true"
         fi
     fi
 done
+
+echo
+echo "is_nz_running: $is_nz_running"
+echo
+echo "is_xray_running: $is_xray_running"
+echo
+echo "is_cf_running: $is_cf_running"
+echo
 
 sleep 1
 
@@ -50,20 +65,29 @@ VLESS_PORT=${VLESS_PORT:-"3001"}
 VLESS_DOMAIN=${VLESS_DOMAIN:-""}
 VMESS_PORT=${VMESS_PORT:-"3002"}
 VMESS_DOMAIN=${VMESS_DOMAIN:-""}
+XRAY_ID=${XRAY_ID:-""}
+XRAY_PATH=${XRAY_PATH:-""}
 
 ###########################################
 
-chmod +x nezha-agent
-./nezha-agent service -c config.yml install &>/dev/null
-nohup ./nezha-agent -c config.yml &>/dev/null &
+if [ $is_nz_running = "false" ]; then
+    chmod +x nezha-agent
+    ./nezha-agent service -c config.yml install &>/dev/null
+    nohup ./nezha-agent -c config.yml &>/dev/null &
+fi
 
-chmod +x cloudflared
-nohup ./cloudflared tunnel run --token "$CF_TOKEN" &>/dev/null &
+if [ $is_cf_running = "false" ]; then
+    chmod +x cloudflared
+    nohup ./cloudflared tunnel run --token "$CF_TOKEN" &>/dev/null &
+fi
 
 gen_xray_config() {
-    id=$(./xray uuid)
-    path=$(./xray uuid)
-    path=${path:0:8}
+    id=${XRAY_ID:-"$(./xray uuid)"}
+    if [ $XRAY_PATH = "" ]; then
+        XRAY_PATH=$(./xray uuid)
+        XRAY_PATH=${XRAY_PATH:0:8}
+    fi
+    path=$XRAY_PATH
     echo "{
     \"inbounds\": [
         {
@@ -136,9 +160,11 @@ gen_xray_config() {
     echo -e "${vmess_link}\n${vless_link}" | base64 -w 0 > links.txt
 }
 
-chmod +x xray
-gen_xray_config
-nohup ./xray &>/dev/null &
+if [ $is_xray_running = "false" ]; then
+    chmod +x xray
+    gen_xray_config
+    nohup ./xray &>/dev/null &
+fi
 
 ####################################################
 

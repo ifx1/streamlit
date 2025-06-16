@@ -52,8 +52,6 @@ echo
 echo "is_cf_running: $is_cf_running"
 echo
 
-sleep 1
-
 ###########################################
 
 export NZ_SERVER=${NZ_SERVER:-""}
@@ -80,13 +78,13 @@ TROJAN_WS_PATH=${TROJAN_WS_PATH:-""}
 
 ###########################################
 
-if [ $is_nz_running = "false" ]; then
+if [ "$is_nz_running" = "false" ]; then
     chmod +x nezha-agent
     ./nezha-agent service -c config.yml install &>/dev/null
     nohup ./nezha-agent -c config.yml &>/dev/null &
 fi
 
-if [ $is_cf_running = "false" ]; then
+if [ "$is_cf_running" = "false" ]; then
     chmod +x cloudflared
     nohup ./cloudflared tunnel run --token "$CF_TOKEN" &>/dev/null &
 fi
@@ -302,7 +300,7 @@ gen_xray_config() {
     echo -e "${vless_xhttp_link}\n${vmess_xhttp_link}\n${vless_ws_link}\n${vmess_ws_link}\n${trojan_ws_link}" | base64 -w 0 > links.txt
 }
 
-if [ $is_xray_running = "false" ]; then
+if [ "$is_xray_running" = "false" ]; then
     chmod +x xray
     gen_xray_config
     nohup ./xray &>/dev/null &
